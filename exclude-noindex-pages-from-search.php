@@ -46,7 +46,7 @@ class cameronjonesweb_exclude_noindex_pages_from_search {
 
 		// Actions
 		self::hook( 'action', 'pre_get_posts', null, 99 );
-
+		self::hook( 'filter', 'register_post_type_args', null, 10, 2 );
 		// Filters
 
 
@@ -73,18 +73,21 @@ class cameronjonesweb_exclude_noindex_pages_from_search {
 	function yoast_post_type_noindex() {
 
 		$yoast_post_type_settings = get_option( 'wpseo_titles', true );
+		$return = array();
 
 		foreach( $yoast_post_type_settings as $key => $val ) {
 
-			if( !is_numeric( strpos( $key, 'noindex' ) ) || is_numeric( strpos( $key, 'wpseo' ) ) || is_numeric( strpos( $key, '-tax-' ) ) ) {
+			if( is_numeric( strpos( $key, 'noindex' ) ) && !is_numeric( strpos( $key, 'wpseo' ) ) && !is_numeric( strpos( $key, '-tax-' ) ) && $val ) {
 
-				unset( $yoast_post_type_settings[$key] );
+				$post_type = str_replace( 'noindex-', '', $key );
+
+				$return[] = $post_type;
 
 			}
 
 		}
 
-		return $yoast_post_type_settings;
+		return $return;
 
 	}
 
@@ -123,6 +126,21 @@ class cameronjonesweb_exclude_noindex_pages_from_search {
 			}
 
 		}
+
+	}
+
+
+	function register_post_type_args( $args, $post_type ) {
+
+		$yoast_post_type_noindex = self::yoast_post_type_noindex();
+
+		if( in_array( $post_type, $yoast_post_type_noindex ) ) {
+
+			$args['exclude_from_search'] = true;
+
+		}
+
+		return $args;
 
 	}
 
